@@ -29,23 +29,23 @@ def add_camera():
     
     return camera
 
-def add_tracker():
+def add_tracker(z):
     bpy.ops.mesh.primitive_cube_add()
     cube = bpy.data.objects['Cube']
-    cube.location = (0,0,0)
+    cube.location = (0,0,z)
     cube.scale = (.1,.1,.1)
     cube.hide_render = True
     return cube
     
-def add_camera_track(steps, camera, tracker):
+def add_camera_track(steps, camera, tracker, scale, z):
     bpy.ops.curve.primitive_bezier_circle_add()
     
     circle = bpy.data.curves['BezierCircle']
     circle.path_duration = steps
     
     circle = bpy.data.objects['BezierCircle']
-    circle.location = (0,0,0)    
-    circle.scale = (10, 10, 1)
+    circle.location = (0,0,z)    
+    circle.scale = scale
     
     camera.select = True
     bpy.context.scene.objects.active = camera
@@ -66,13 +66,12 @@ def render_animation(num_frames, directory):
     scn = bpy.context.scene
     scn.frame_end = num_frames
     scn.render.filepath = directory
-    bpy.ops.render.render(animation=True)
+    #bpy.ops.render.render(animation=True)
     
 def add_light(tracker):
     bpy.ops.object.lamp_add(type='AREA')
     light = bpy.data.objects['Area']
-    
-    light.location = (10,-5,10)
+    light.location = (10,-5,10)    
     
     bpy.ops.object.select_all(action = "DESELECT")
     light.select = True
@@ -80,11 +79,15 @@ def add_light(tracker):
     bpy.context.scene.objects.active = tracker
     bpy.ops.object.track_set(type = "TRACKTO") 
     
+    light = bpy.data.lamps['Area']
+    light.node_tree.nodes['Emission'].inputs['Strength'].default_value = 5000
+    
 
 def add_ply(path, vertex_colors=True):
     bpy.ops.import_mesh.ply(filepath=path)
     obj = bpy.context.scene.objects.active
     obj.location = (0,0,0)
+    bpy.ops.object.shade_smooth()
     
     mat = bpy.data.materials.new("Material")
     mat.use_nodes = True
@@ -101,16 +104,26 @@ def add_ply(path, vertex_colors=True):
         links.new(att.outputs['Color'], diff.inputs['Color'])
     obj.data.materials.append(mat)
     
-def spin_render(num_frames, out_dir):
-    bpy.context.scene.render.engine = 'CYCLES'
-    tracker = add_tracker()
+def spin_render(num_frames, out_dir, scale, z):
+    tracker = add_tracker(z)
     camera = add_camera()
-    add_camera_track(num_frames, camera, tracker)
+    add_camera_track(num_frames, camera, tracker, (scale, scale, 1), z)
     add_light(tracker)
     
     render_animation(num_frames, out_dir)
 
-reset_blend()
-add_ply("C:/Users/davidf/Documents/Python Scripts/bunny/reconstruction/bun_zipper_res3.ply")
-spin_render(18, "C:/Users/davidf/Documents/Python Scripts/")
+def setup_world():
+    bpy.context.scene.render.engine = 'CYCLES'
+    bpy.context.scene.render.resolution_x = 1200
+    bpy.context.scene.render.resolution_y = 1200
+    bpy.context.scene.cycles.film_transparent = True
+    bpy.data.worlds['World'].light_settings.use_ambient_occlusion = True
+    bpy.data.worlds['World'].light_settings.ao_factor = 0.4  
+
+reset_blend()    
+setup_world()
+#add_ply("/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned.ply")
+#spin_render(90, "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/HH16.06.007.01.05.02_550397440_p_DendriteAxon_aligned/", 24, -4)
+add_ply("/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned.ply")
+spin_render(90, "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned/", 18, 2)
 
