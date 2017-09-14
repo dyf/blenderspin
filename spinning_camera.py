@@ -62,11 +62,10 @@ def add_camera_track(steps, camera, tracker, scale, z):
     bpy.context.scene.objects.active = tracker
     bpy.ops.object.track_set(type = "TRACKTO") 
 
-def render_animation(num_frames, directory):
+def setup_animation(num_frames, directory):
     scn = bpy.context.scene
     scn.frame_end = num_frames
     scn.render.filepath = directory
-    #bpy.ops.render.render(animation=True)
     
 def add_light(tracker):
     bpy.ops.object.lamp_add(type='AREA')
@@ -104,13 +103,15 @@ def add_ply(path, vertex_colors=True):
         links.new(att.outputs['Color'], diff.inputs['Color'])
     obj.data.materials.append(mat)
     
-def spin_render(num_frames, out_dir, scale, z):
+def spin_render(num_frames, out_dir, scale, z, dry_run=False):
     tracker = add_tracker(z)
     camera = add_camera()
     add_camera_track(num_frames, camera, tracker, (scale, scale, 1), z)
     add_light(tracker)
+    setup_animation(num_frames, out_dir)
     
-    render_animation(num_frames, out_dir)
+    if not dry_run:
+        bpy.ops.render.render(animation=True)
 
 def setup_world():
     bpy.context.scene.render.engine = 'CYCLES'
@@ -120,10 +121,27 @@ def setup_world():
     bpy.data.worlds['World'].light_settings.use_ambient_occlusion = True
     bpy.data.worlds['World'].light_settings.ao_factor = 0.4  
 
-reset_blend()    
-setup_world()
-#add_ply("/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned.ply")
-#spin_render(90, "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/HH16.06.007.01.05.02_550397440_p_DendriteAxon_aligned/", 24, -4)
-add_ply("/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned.ply")
-spin_render(90, "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned/", 18, 2)
+
+def main():
+    configs = [
+        dict(ply = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned.ply",
+             outdir = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned/",
+             scale = 21,
+             z = -4,
+             steps = 90),
+        dict(ply = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned.ply",
+             outdir = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned/",
+             scale = 18,
+             z = 2,
+             steps = 90)
+    ]   
+    
+    for config in configs:
+        reset_blend()    
+        setup_world()
+        add_ply(config['ply'])
+        spin_render(config['steps'], config['outdir'], config['scale'], config['z'])
+
+    
+if __name__ == "__main__": main()
 
