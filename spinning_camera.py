@@ -108,7 +108,7 @@ def spin_render(num_frames, out_dir):
     add_camera_track(num_frames, camera, tracker)
     add_light(tracker)
     
-    #render_animation(num_frames, out_dir)
+    render_animation(num_frames, out_dir)
 
 reset_blend()
 add_ply("C:/Users/davidf/Documents/Python Scripts/bunny/reconstruction/bun_zipper_res3.ply")
