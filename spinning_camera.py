@@ -117,9 +117,11 @@ def setup_world():
     bpy.context.scene.render.engine = 'CYCLES'
     bpy.context.scene.render.resolution_x = 1200
     bpy.context.scene.render.resolution_y = 1200
-    bpy.context.scene.cycles.film_transparent = True
+    bpy.context.scene.render.resolution_percentage = 100
+    bpy.context.scene.cycles.film_transparent = False
     bpy.data.worlds['World'].light_settings.use_ambient_occlusion = True
     bpy.data.worlds['World'].light_settings.ao_factor = 0.4  
+    bpy.data.worlds['World'].horizon_color = (0,0,0)
 
 
 def main():
@@ -128,19 +130,19 @@ def main():
              outdir = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned/",
              scale = 21,
              z = -4,
-             steps = 90),
+             steps = 300),
         dict(ply = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned.ply",
              outdir = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned/",
              scale = 18,
              z = 2,
-             steps = 90)
+             steps = 300)
     ]   
     
     for config in configs:
         reset_blend()    
         setup_world()
         add_ply(config['ply'])
-        spin_render(config['steps'], config['outdir'], config['scale'], config['z'])
+        spin_render(config['steps'], config['outdir'], config['scale'], config['z'], dry_run=False)
 
     
 if __name__ == "__main__": main()
