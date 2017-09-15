@@ -2,6 +2,7 @@ import sys, os, csv
 import numpy as np
 import allensdk.core.swc as swc
 import vtkmorph
+import xform
 import math
 
 def read_csv(file_name):
@@ -114,25 +115,13 @@ def color_by_type(node):
 def main_human_pr():
     input_file = sys.argv[1]
 
-    import allensdk.core.swc as swc
-
     morphology = swc.read_swc(input_file)
 
-    theta = 90 * np.pi / 180.0
-    cth = math.cos(theta)
-    sth = math.sin(theta)
-    t0 = np.array([[ 1, 0, 0, -morphology.root['x']], 
-                   [ 0, 1, 0, -morphology.root['y']], 
-                   [ 0, 0, 1, -morphology.root['z']],
-                   [ 0, 0, 0, 1 ]])
-    r = np.array([[ 1, 0, 0, 0],
-                  [ 0, cth, sth, 0],
-                  [ 0, -sth, cth, 0],
-                  [ 0, 0, 0, 1 ]])
-    s = np.array([[ 1, 0, 0, 0 ],
-                  [ 0, 1, 0, 0 ],
-                  [ 0, 0, 3, 0 ],
-                  [ 0, 0, 0, 1 ]])
+    t0 = xform.translate3(-morphology.root['x'], 
+                           -morphology.root['y'], 
+                           -morphology.root['z'])
+    r = xform.rotate3x(math.rads(90))
+    s = xform.scale3(1,1,3)
 
     m = np.dot(r, np.dot(s, t0))
 
