@@ -19,11 +19,16 @@ def reset_blend():
         for id_data in bpy_data_iter:
             bpy_data_iter.remove(id_data)
 
-def add_camera():
+def add_camera(scale):
     bpy.ops.object.camera_add()
     scene = bpy.data.scenes[0]
     camera = bpy.data.objects["Camera"]
-    camera.location = (0,0,0)
+    camera.data.type = 'ORTHO'
+    camera.data.ortho_scale = scale
+    
+    camera.location = (0,0,0)   
+    
+
     bpy.context.scene.camera = camera
     #camera.rotation_euler.x = math.pi*0.5
     
@@ -37,17 +42,18 @@ def add_tracker(z):
     cube.hide_render = True
     return cube
     
-def add_camera_track(steps, camera, tracker, scale, z):
+def add_camera_track(steps, camera, tracker, z):
     bpy.ops.curve.primitive_bezier_circle_add()
     
     circle = bpy.data.curves['BezierCircle']
     circle.path_duration = steps
     
     circle = bpy.data.objects['BezierCircle']
-    circle.location = (0,0,z)    
-    circle.scale = scale
+    circle.location = (0,0,z)        
+    circle.scale = (1.0,1.0,1.0)
     
     camera.select = True
+
     bpy.context.scene.objects.active = camera
     
     camera.constraints.new('FOLLOW_PATH')
@@ -105,8 +111,8 @@ def add_ply(path, vertex_colors=True):
     
 def spin_render(num_frames, out_dir, scale, z, dry_run=False):
     tracker = add_tracker(z)
-    camera = add_camera()
-    add_camera_track(num_frames, camera, tracker, (scale, scale, 1), z)
+    camera = add_camera(scale)
+    add_camera_track(num_frames, camera, tracker, z)
     add_light(tracker)
     setup_animation(num_frames, out_dir)
     
@@ -115,20 +121,19 @@ def spin_render(num_frames, out_dir, scale, z, dry_run=False):
 
 def setup_world():
     bpy.context.scene.render.engine = 'CYCLES'
-    bpy.context.scene.render.resolution_x = 1200
+    bpy.context.scene.render.resolution_x = 1980
     bpy.context.scene.render.resolution_y = 1200
     bpy.context.scene.render.resolution_percentage = 100
-    bpy.context.scene.cycles.film_transparent = False
+    bpy.context.scene.cycles.film_transparent = True
     bpy.data.worlds['World'].light_settings.use_ambient_occlusion = True
     bpy.data.worlds['World'].light_settings.ao_factor = 0.4  
     bpy.data.worlds['World'].horizon_color = (0,0,0)
-
 
 def main():
     configs = [
         dict(ply = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned.ply",
              outdir = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned/",
-             scale = 21,
+             scale = 28.6,
              z = -4,
              steps = 300),
         dict(ply = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned.ply",
