@@ -157,6 +157,7 @@ def main_human_pr():
                                 morphology.root['y'],
                                 morphology.root['z'],
                                 1 ])
+        r = xform.rotate3x(math.radians(-90))
     else:
         swc_file = args.input_file
         morphology = swc.read_swc(swc_file)
@@ -165,9 +166,8 @@ def main_human_pr():
                               -morphology.root['y'], 
                               -morphology.root['z'])
 
+        r = xform.rotate3x(math.radians(90))
 
-
-    r = xform.rotate3x(math.radians(90))
     s = xform.scale3(1,1,3)
     
     m = np.dot(np.dot(r, np.dot(s, t0)), m0)

@@ -131,13 +131,13 @@ def setup_world():
 
 def main():
     configs = [
-        dict(ply = "C:/Users/davidf/workspace/human_press_release/H16.06.010.01.03.05.02_599474744_m.ply",
-             outdir = "C:/Users/davidf/workspace/human_press_release/H16.06.010.01.03.05.02_599474744_m/",
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.05.02_599474744_m.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.05.02_599474744_m/",
              scale = 4.8,
              z = .3,
              steps = 300),
-        dict(ply = "C:/Users/davidf/workspace/human_press_release/H16.06.010.01.03.14.02_599474317_m.ply",
-             outdir = "C:/Users/davidf/workspace/human_press_release/H16.06.010.01.03.14.02_599474317_m/",
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_599474317_m.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_599474317_m/",
              scale = 2.1,
              z = .24,
              steps = 300),
@@ -153,7 +153,7 @@ def main():
              steps = 300)
     ]   
     
-    for config in configs[1:2]:
+    for config in configs[0:2]:
         reset_blend()    
         setup_world()
         add_ply(config['ply'])
