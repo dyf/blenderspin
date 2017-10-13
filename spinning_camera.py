@@ -121,8 +121,8 @@ def spin_render(num_frames, out_dir, scale, z, dry_run=False):
 
 def setup_world():
     bpy.context.scene.render.engine = 'CYCLES'
-    bpy.context.scene.render.resolution_x = 1980
-    bpy.context.scene.render.resolution_y = 1200
+    bpy.context.scene.render.resolution_x = 5940
+    bpy.context.scene.render.resolution_y = 3600
     bpy.context.scene.render.resolution_percentage = 100
     bpy.context.scene.cycles.film_transparent = True
     bpy.data.worlds['World'].light_settings.use_ambient_occlusion = True
@@ -131,13 +131,13 @@ def setup_world():
 
 def main():
     configs = [
-        dict(ply = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned.ply",
-             outdir = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned/",
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.007.01.05.02_550397440_p_DendriteAxon_aligned/",
              scale = 28.6,
              z = -4,
              steps = 300),
-        dict(ply = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned.ply",
-             outdir = "/Users/davidf/tmp/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned/",
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.14.02_548268538_p_dendriteaxon_aligned/",
              scale = 18,
              z = 2,
              steps = 300)

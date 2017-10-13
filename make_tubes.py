@@ -4,6 +4,7 @@ import allensdk.core.swc as swc
 import vtkmorph
 import xform
 import math
+import argparse
 
 def read_csv(file_name):
     rows = []
@@ -112,26 +113,73 @@ COLORS = {
 def color_by_type(node):
     return COLORS[node['type']]
 
+
+def fetch_cell(specimen_id):
+    import allensdk.internal.core.lims_utilities as lu
+    query = """
+    select a3d.* from specimens sp
+    join alignment3ds a3d on sp.alignment3d_id = a3d.id
+    where sp.id = %d
+    """
+
+    a3d = lu.query(query % specimen_id)[0]
+    m = np.array([ [ a3d['tvr_00'], a3d['tvr_01'], a3d['tvr_02'], a3d['tvr_09'] ],
+                   [ a3d['tvr_03'], a3d['tvr_04'], a3d['tvr_05'], a3d['tvr_10'] ],
+                   [ a3d['tvr_06'], a3d['tvr_07'], a3d['tvr_08'], a3d['tvr_11'] ],
+                   [ 0, 0, 0, 1 ] ])
+
+    query = """
+    select wkf.storage_directory||wkf.filename as swc_file from well_known_files wkf
+    join neuron_reconstructions nr on wkf.attachable_id = nr.id
+    where nr.specimen_id = %d
+    and nr.superseded = false
+    and nr.manual = true
+    and wkf.well_known_file_type_id = 303941301
+"""
+    swc_file = lu.query(query % specimen_id)[0]['swc_file']
+    
+    return swc_file, m
+    
+
 def main_human_pr():
-    input_file = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--swc_file', default=None)
+    parser.add_argument('--specimen_id', default=None, type=int)
+    parser.add_argument('--output_dir', default='.')
+    args = parser.parse_args()
 
-    morphology = swc.read_swc(input_file)
+    if args.specimen_id:
+        swc_file, m0 = fetch_cell(args.specimen_id)
+        morphology = swc.read_swc(swc_file)
+        
+        t0 = np.eye(4)
+        t0[:,3] = -np.dot(m0, [ morphology.root['x'],
+                                morphology.root['y'],
+                                morphology.root['z'],
+                                1 ])
+    else:
+        swc_file = args.input_file
+        morphology = swc.read_swc(swc_file)
+        m0 = np.eye(4)
+        t0 = xform.translate3(-morphology.root['x'], 
+                              -morphology.root['y'], 
+                              -morphology.root['z'])
 
-    t0 = xform.translate3(-morphology.root['x'], 
-                           -morphology.root['y'], 
-                           -morphology.root['z'])
-    r = xform.rotate3x(math.rads(90))
+
+
+    r = xform.rotate3x(math.radians(90))
     s = xform.scale3(1,1,3)
-
-    m = np.dot(r, np.dot(s, t0))
-
+    
+    m = np.dot(np.dot(r, np.dot(s, t0)), m0)
+    
     morphology = make_transformed_morphology(morphology, m, 2)
 
-    base,ext = os.path.splitext(input_file)
+    base,ext = os.path.splitext(os.path.basename(swc_file))
+    print base
     
     tube_pd = vtkmorph.generate_mesh(morphology.compartment_index, morphology.root, color_by_type, 6, radius=None)
-    vtkmorph.write_ply(tube_pd, base + ".ply")
-    vtkmorph.write_vtk(tube_pd, base + ".vtk")
+    vtkmorph.write_ply(tube_pd, os.path.join(args.output_dir, base + ".ply"))
+    vtkmorph.write_vtk(tube_pd, os.path.join(args.output_dir, base + ".vtk"))
 
 def main_specimen():
     from allensdk.core.cell_types_cache import CellTypesCache
@@ -147,7 +195,7 @@ def main_specimen():
     vtkmorph.write_ply(tube_pd, '%d.ply' % specimen_id)
     vtkmorph.write_vtk(tube_pd, '%d.vtk' % specimen_id)
     
-def main():
+def main():    
     #ccf_file_name = 'ccf_alignments.csv'
     #upright_file_name = 'upright_alignments.csv'
     csv_file_name = sys.argv[1]
