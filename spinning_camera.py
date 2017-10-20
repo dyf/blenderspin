@@ -131,6 +131,21 @@ def setup_world():
 
 def main():
     configs = [
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.04.01_566350716_m.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.04.01_566350716_m/",
+             scale = 1.48,
+             z = -.085,
+             steps = 300),
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.03.007.01.01.08.01_564395300_m.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.03.007.01.01.08.01_564395300_m/",
+             scale = 2.0,
+             z = .163,
+             steps = 300),
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.004.01.04.05_556380170_m.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.004.01.04.05_556380170_m/",
+             scale = 4.8,
+             z = .3,
+             steps = 300),
         dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.05.02_599474744_m.ply",
              outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.05.02_599474744_m/",
              scale = 4.8,
@@ -157,7 +172,7 @@ def main():
         reset_blend()    
         setup_world()
         add_ply(config['ply'])
-        spin_render(config['steps'], config['outdir'], config['scale'], config['z'], dry_run=True)
+        spin_render(config['steps'], config['outdir'], config['scale'], config['z'], dry_run=False)
 
     
 if __name__ == "__main__": main()

@@ -25,7 +25,7 @@ def preorder_traversal(root, compartments):
         
     return nodelist
 
-def morphology_polydata(compartments, root_compartment, color_fn, minRadius=0.0):
+def morphology_polydata(compartments, soma_compartment, color_fn, minRadius=0.0):
     points = vtk.vtkPoints()
     lines = vtk.vtkCellArray()
 
@@ -45,56 +45,55 @@ def morphology_polydata(compartments, root_compartment, color_fn, minRadius=0.0)
     compartment_ids.SetNumberOfComponents(1)
     compartment_ids.SetName("compartment_id")
 
-    nodelist = preorder_traversal(root_compartment, compartments)
-
     pidmap = {}
-    line = []
+    soma_pid = -1
+    soma_radius = 0
 
-    root_pid = -1
-    root_radius = 0
+    roots = [ c for c in compartments.values() if c['parent'] == -1 ]
+    
+    for ri, root in enumerate(roots):
+        print "root", ri
+        nodelist = preorder_traversal(root, compartments)
 
-    for node in nodelist:
+        line = []
 
-        if len(line) == 0 and node['parent'] != -1:
-            line.append(pidmap[node['parent']])
+        for node in nodelist:
+            if len(line) == 0 and node['parent'] != -1:
+                line.append(pidmap[node['parent']])
 
-        pid = points.InsertNextPoint(node['x'], node['y'], node['z'])
+            pid = points.InsertNextPoint(node['x'], node['y'], node['z'])
+                
+            # keep track of the pid of the root node, as well as the radius of
+            # one of its children.  We'll use that radius as a surrogate radius,
+            # since dendrites don't actually have a cone shape
+            if node == soma_compartment:
+                soma_pid = pid
+            if node['parent'] == soma_compartment['id']:
+                soma_radius = node['radius']
 
-        # keep track of the pid of the root node, as well as the radius of
-        # one of its children.  We'll use that radius as a surrogate radius,
-        # since dendrites don't actually have a cone shape
-        if node['parent'] == "-1":
-            root_pid = pid
-            try:
-                child = compartments[node['children'][0]]
-                root_radius = child['radius']
-            except BaseException as e:
-                print(e)
-                pass
+            radii.InsertNextTuple1(max(node['radius'], minRadius))
+            types.InsertNextTuple1(node['type'])
 
-        radii.InsertNextTuple1(max(node['radius'], minRadius))
-        types.InsertNextTuple1(node['type'])
+            color = color_fn(node)
+            colors.InsertNextTuple3(color[0], color[1], color[2])
+            compartment_ids.InsertNextTuple1(int(node['id']))
 
-        color = color_fn(node)
-        colors.InsertNextTuple3(color[0], color[1], color[2])
-        compartment_ids.InsertNextTuple1(int(node['id']))
+            pidmap[node['id']] = pid
 
-        pidmap[node['id']] = pid
-
-        line.append(pid)
-        if len(node['children']) == 0:
-            lines.InsertNextCell(len(line))
-            for i in line:
-                lines.InsertCellPoint(i)
-            line = []
+            line.append(pid)
+            if len(node['children']) == 0:
+                lines.InsertNextCell(len(line))
+                for i in line:
+                    lines.InsertCellPoint(i)
+                line = []
 
     for p in xrange(1,points.GetNumberOfPoints()):
         p1 = points.GetPoint(p-1)
         p2 = points.GetPoint(p)
 
     # assuming we found a root, update its radius
-    if root_radius > 0 and root_pid >= 0:
-        radii.SetTuple1(root_pid, root_radius)
+    if soma_radius > 0 and soma_pid >= 0:
+        radii.SetTuple1(soma_pid, soma_radius)
 
     polyData = vtk.vtkPolyData()
     polyData.SetPoints(points)
