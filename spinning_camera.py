@@ -131,6 +131,16 @@ def setup_world():
 
 def main():
     configs = [
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H17.06.003.11.06.01_589259963_m.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H17.06.003.11.06.01_589259963_m/",
+             scale = 1.88,
+             z = -.0185,
+             steps = 300),
+        dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H17.06.006.11.09.05_601947568_m.ply",
+             outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H17.06.006.11.09.05_601947568_m/",
+             scale = 1.88,
+             z = 0.376,
+             steps = 300),
         dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.04.01_566350716_m.ply",
              outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H16.06.010.01.03.04.01_566350716_m/",
              scale = 1.48,
@@ -168,11 +178,11 @@ def main():
              steps = 300)
     ]   
     
-    for config in configs[0:2]:
+    for config in configs[0:1]:
         reset_blend()    
         setup_world()
         add_ply(config['ply'])
-        spin_render(config['steps'], config['outdir'], config['scale'], config['z'], dry_run=False)
+        spin_render(config['steps'], config['outdir'], config['scale'], config['z'], dry_run=True)
 
     
 if __name__ == "__main__": main()

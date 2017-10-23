@@ -159,7 +159,7 @@ def main_human_pr():
                                 1 ])
         r = xform.rotate3x(math.radians(-90))
     else:
-        swc_file = args.input_file
+        swc_file = args.swc_file
         morphology = swc.read_swc(swc_file)
         m0 = np.eye(4)
         t0 = xform.translate3(-morphology.root['x'], 
