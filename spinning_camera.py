@@ -50,7 +50,7 @@ def add_camera_track(steps, camera, tracker, z):
     
     circle = bpy.data.objects['BezierCircle']
     circle.location = (0,0,z)        
-    circle.scale = (1.0,1.0,1.0)
+    circle.scale = (10.0,10.0,10.0)
     
     camera.select = True
 
@@ -178,11 +178,11 @@ def main():
              steps = 300)
     ]   
     
-    for config in configs[0:1]:
+    for config in configs:
         reset_blend()    
         setup_world()
         add_ply(config['ply'])
-        spin_render(config['steps'], config['outdir'], config['scale'], config['z'], dry_run=True)
+        spin_render(config['steps'], config['outdir'], config['scale'], config['z'], dry_run=False)
 
     
 if __name__ == "__main__": main()
