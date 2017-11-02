@@ -5,6 +5,7 @@ import vtkmorph
 import xform
 import math
 import argparse
+import scipy.stats
 
 def read_csv(file_name):
     rows = []
@@ -24,6 +25,40 @@ def read_csv(file_name):
             }
         for r in rows }
 
+def align_apical_dendrite(morphology):
+    apicals = [ c for c in morphology.compartment_list if c['type'] == 4 ]
+    
+    if len(apicals) == 0:
+        return np.eye(4)
+
+    y = np.array([c['y'] for c in apicals ])
+    z = np.array([c['z'] for c in apicals ])
+
+    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(y,z)
+    theta = np.arctan2(1, -slope)
+
+    print theta, math.degrees(theta)
+    r = xform.rotate3x(theta)
+                   
+    # translate soma to origin
+    soma = morphology.root
+    t1 = np.array([[1, 0, 0, -soma['x']],
+                   [0, 1, 0, -soma['y']],
+                   [0, 0, 1, -soma['z']],
+                   [0, 0, 0, 1]])
+    
+    # then go back
+    t2 = np.array([[1, 0, 0, soma['x']],
+                   [0, 1, 0, soma['y']],
+                   [0, 0, 1, soma['z']],
+                   [0, 0, 0, 1]])
+
+
+    t = t2.dot(r).dot(t1)
+
+    return t
+
+
 def make_transformed_morphology(morphology, transform, radius_scale=1.0):
     #morphology.sparsify(3)
 
@@ -34,10 +69,10 @@ def make_transformed_morphology(morphology, transform, radius_scale=1.0):
         #if tpos[2] > (11390.0 * 0.5):
         #    tpos[2] = 11390 - tpos[2]
             
-        comp['x'] = tpos[0] / 1000.0
-        comp['y'] = tpos[1] / 1000.0
-        comp['z'] = tpos[2] / 1000.0
-        comp['radius'] = comp['radius'] / 1000.0 * radius_scale
+        comp['x'] = tpos[0]
+        comp['y'] = tpos[1]
+        comp['z'] = tpos[2]
+        comp['radius'] = comp['radius'] * radius_scale
 
     return morphology
 
@@ -168,11 +203,18 @@ def main_human_pr():
 
         r = xform.rotate3x(math.radians(90))
 
-    s = xform.scale3(1,1,3)
+    sz = xform.scale3(1, 1, 3)
+    sm = xform.scale3(.001, .001, .001)
     
-    m = np.dot(np.dot(r, np.dot(s, t0)), m0)
-    
-    morphology = make_transformed_morphology(morphology, m, 2)
+    m = np.dot(sm, np.dot(np.dot(r, np.dot(sz, t0)), m0))
+
+    morphology = make_transformed_morphology(morphology, m)
+
+    # rotate the apical
+    ra = align_apical_dendrite(morphology)
+    print ra
+
+    morphology = make_transformed_morphology(morphology, ra, .002)
 
     base,ext = os.path.splitext(os.path.basename(swc_file))
     print base
