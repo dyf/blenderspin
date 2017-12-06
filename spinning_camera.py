@@ -119,17 +119,41 @@ def spin_render(num_frames, out_dir, scale, z, dry_run=False):
     if not dry_run:
         bpy.ops.render.render(animation=True)
 
-def setup_world():
+def setup_world(resolution_x=5940, resolution_y=3600, transparent_background=True, resolution_percentage=100):
     bpy.context.scene.render.engine = 'CYCLES'
-    bpy.context.scene.render.resolution_x = 5940
-    bpy.context.scene.render.resolution_y = 3600
-    bpy.context.scene.render.resolution_percentage = 100
-    bpy.context.scene.cycles.film_transparent = True
+    bpy.context.scene.render.resolution_x = resolution_x
+    bpy.context.scene.render.resolution_y = resolution_y
+    bpy.context.scene.render.resolution_percentage = resolution_percentage
+    bpy.context.scene.cycles.film_transparent = transparent_background
     bpy.data.worlds['World'].light_settings.use_ambient_occlusion = True
     bpy.data.worlds['World'].light_settings.ao_factor = 0.4  
     bpy.data.worlds['World'].horizon_color = (0,0,0)
 
 def main():
+    base_config = {
+        'scale': 1.88,
+        'z': -0.0185,
+        'steps': 300
+        }
+    
+    for dir_name in os.listdir('.'):
+        ply_file = None
+        if os.isdir(dir_name):
+            ply_file = os.path.join(dir_name, 'recon.ply')
+            
+        if not os.path.exists(ply_file):
+            continue
+
+        base_config['ply'] = ply_file
+        base_config['outdir'] = dir_name
+
+        reset_blend()    
+        setup_world(resolution_percentage=20)
+        add_ply(config['ply'])
+        spin_render(config['steps'], config['outdir'], config['scale'], config['z'], dry_run=False)
+
+
+def main_manual():
     configs = [
         dict(ply = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H17.06.003.11.06.01_589259963_m.ply",
              outdir = "/allen/aibs/technology/mousecelltypes/artwork/human_press_release/H17.06.003.11.06.01_589259963_m/",

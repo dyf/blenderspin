@@ -37,7 +37,9 @@ def align_apical_dendrite(morphology):
     slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(y,z)
     theta = np.arctan2(1, -slope)
 
-    print theta, math.degrees(theta)
+    print slope, theta, math.degrees(theta)
+    theta = 0
+    
     r = xform.rotate3x(theta)
                    
     # translate soma to origin
@@ -176,15 +178,9 @@ def fetch_cell(specimen_id):
     return swc_file, m
     
 
-def main_human_pr():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--swc_file', default=None)
-    parser.add_argument('--specimen_id', default=None, type=int)
-    parser.add_argument('--output_dir', default='.')
-    args = parser.parse_args()
-
-    if args.specimen_id:
-        swc_file, m0 = fetch_cell(args.specimen_id)
+def fetch_aligned_morphology(specimen_id=None, swc_file=None):
+    if specimen_id:
+        swc_file, m0 = fetch_cell(specimen_id)
         morphology = swc.read_swc(swc_file)
         
         t0 = np.eye(4)
@@ -194,7 +190,7 @@ def main_human_pr():
                                 1 ])
         r = xform.rotate3x(math.radians(-90))
     else:
-        swc_file = args.swc_file
+        swc_file = swc_file
         morphology = swc.read_swc(swc_file)
         m0 = np.eye(4)
         t0 = xform.translate3(-morphology.root['x'], 
@@ -212,12 +208,51 @@ def main_human_pr():
 
     # rotate the apical
     ra = align_apical_dendrite(morphology)
-    print ra
 
     morphology = make_transformed_morphology(morphology, ra, .002)
 
+    return morphology
+
+def main_all_human():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('output_dir', default='.')
+    args = parser.parse_args()
+
+    from allensdk.core.cell_types_cache import CellTypesCache
+    from allensdk.api.queries.cell_types_api import CellTypesApi
+    ctc = CellTypesCache(manifest_file=os.path.join(args.output_dir, "ctc", "manifest.json"))
+
+    cells = ctc.get_cells(require_reconstruction=True, species=[CellTypesApi.HUMAN])
+
+    for cell in cells:
+        morphology = fetch_aligned_morphology(specimen_id=cell['id'])
+        
+        cell_dir = os.path.join(args.output_dir, str(cell['id']))
+
+        if not os.path.exists(cell_dir):
+            os.makedirs(cell_dir)
+
+        # swc_file = os.path.join(cell_dir, "recon.swc")
+        ply_file = os.path.join(cell_dir, "recon.ply")
+        vtk_file = os.path.join(cell_dir, "recon.vtk")
+
+        tube_pd = vtkmorph.generate_mesh(morphology.compartment_index, morphology.root, color_by_type, 6, radius=None)
+        vtkmorph.write_ply(tube_pd, ply_file)
+        vtkmorph.write_vtk(tube_pd, vtk_file)
+
+        print(ply_file)
+    
+
+def main_human_pr():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--swc_file', default=None)
+    parser.add_argument('--specimen_id', default=None, type=int)
+    parser.add_argument('--output_dir', default='.')
+    args = parser.parse_args()
+
+    morphology = fetch_aligned_morphology(args.specimen_id, args.swc_file)
+
     base,ext = os.path.splitext(os.path.basename(swc_file))
-    print base
     
     tube_pd = vtkmorph.generate_mesh(morphology.compartment_index, morphology.root, color_by_type, 6, radius=None)
     vtkmorph.write_ply(tube_pd, os.path.join(args.output_dir, base + ".ply"))
@@ -276,6 +311,6 @@ def main():
         vtkmorph.write_vtk(tube_pd, os.path.join(output_dir,'%d.vtk' % specimen_id))
 
 
-if __name__ == "__main__": main_human_pr()
+if __name__ == "__main__": main_all_human()
 
     
