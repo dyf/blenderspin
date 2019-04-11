@@ -1,5 +1,6 @@
 import bpy
 import csv
+import random
 
 def reset_blend():
     #bpy.ops.wm.read_factory_settings()
@@ -18,7 +19,7 @@ def reset_blend():
             bpy.data.materials
             ):
         for id_data in bpy_data_iter:
-            bpy_data_iter.remove(id_data)
+            bpy_data_iter.remove(id_data, True)
 
 def add_camera(scale):
     bpy.ops.object.camera_add()
@@ -87,7 +88,7 @@ def add_light(tracker):
     bpy.ops.object.track_set(type = "TRACKTO")
 
     light = bpy.data.lamps['Area']
-    light.node_tree.nodes['Emission'].inputs['Strength'].default_value = 5000
+    light.node_tree.nodes['Emission'].inputs['Strength'].default_value = 10000
 
 def setup_world(resolution_x=5940, resolution_y=3600, transparent_background=True, resolution_percentage=100):
     bpy.context.scene.render.engine = 'CYCLES'
@@ -116,9 +117,12 @@ def load_data():
         r = csv.DictReader(f)
     
         points = list(r)
-        
     
-    for i, point in enumerate(points[:1000]):
+    mats = {}
+    
+    points = random.sample(points, 2000)
+    
+    for i, point in enumerate(points):
         bpy.ops.surface.primitive_nurbs_surface_sphere_add()
         obj = bpy.context.object
         obj.location = ( float(point['y']), 
@@ -126,28 +130,42 @@ def load_data():
                          float(point['z']) )
         obj.scale = ( 0.1, 0.1, 0.1 )
         
-        mat = bpy.data.materials.new("Material %d" % i)
-        mat.use_nodes = True
+        rgb = ( float(point['r']), float(point['g']), float(point['b']), 1.0 )
         
-        nodes = mat.node_tree.nodes
-        links = mat.node_tree.links           
+        if rgb not in mats:
+            mat = bpy.data.materials.new("Material %d" % i)
+            mat.use_nodes = True
         
-        nodes.remove(nodes.get('Diffuse BSDF'))
-                
-        glass = nodes.new('ShaderNodeBsdfGlass')
-        glass.inputs['Roughness'].default_value = 0.817
-        glass.inputs['IOR'].default_value = 2.1
-        glass.inputs['Color'].default_value = ( float(point['r']), 
-                                                float(point['g']), 
-                                                float(point['b']), 1.0 )
+            nodes = mat.node_tree.nodes
+            links = mat.node_tree.links           
         
-        material_output = nodes.get('Material Output')
-        links.new(glass.outputs[0], material_output.inputs[0])
+            nodes.remove(nodes.get('Diffuse BSDF'))
+        
+            ao = nodes.new('ShaderNodeAmbientOcclusion')
+                    
+            glass = nodes.new('ShaderNodeBsdfGlass')
+            glass.inputs['Roughness'].default_value = 0.217
+            glass.inputs['IOR'].default_value = 2.1
+            glass.inputs['Color'].default_value = ( float(point['r']), 
+                                                    float(point['g']), 
+                                                    float(point['b']), 1.0 )
+        
+            mix = nodes.new('ShaderNodeMixShader')
+            mix.inputs['Fac'].default_value = .02
+            links.new(glass.outputs[0], mix.inputs[1])
+            links.new(ao.outputs[0], mix.inputs[2])
+            
+            material_output = nodes.get('Material Output')
+            links.new(mix.outputs[0], material_output.inputs[0])
+            
+            mats[rgb] = mat
+        
+        mat = mats[rgb]
         
         obj.data.materials.append(mat)
             
 reset_blend()
-setup_world(resolution_x=600, resolution_y=400)
+setup_world(resolution_x=1024, resolution_y=1024)
 load_data()
         
     
