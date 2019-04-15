@@ -111,58 +111,43 @@ def spin_render(num_frames, out_dir, scale, z, dry_run=False):
         bpy.ops.render.render(animation=True)
 
 def load_data():
-    file_name = "/allen/scratch/aibstemp/davidf/artwork/hmtg/hmtg_cells.csv"
-
-    with open(file_name, 'r') as f:
-        r = csv.DictReader(f)
+    file_name = "/Users/davidf/Projects/blenderspin/hmtg/geo.ply"
     
-        points = list(r)
+    bpy.ops.import_mesh.ply(filepath=file_name)
+    obj = bpy.context.object
+    obj.location = (0,0,0)
+    bpy.ops.object.shade_smooth()
     
-    mats = {}
+    mat = bpy.data.materials.new("Material")
+    mat.use_nodes = True
     
-    points = random.sample(points, 2000)
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links           
+        
+    nodes.remove(nodes.get('Diffuse BSDF'))
     
-    for i, point in enumerate(points):
-        bpy.ops.surface.primitive_nurbs_surface_sphere_add()
-        obj = bpy.context.object
-        obj.location = ( float(point['y']), 
-                         float(point['x']), 
-                         float(point['z']) )
-        obj.scale = ( 0.1, 0.1, 0.1 )
+    att = nodes.new('ShaderNodeAttribute')
+    att.attribute_name = 'Col'
         
-        rgb = ( float(point['r']), float(point['g']), float(point['b']), 1.0 )
-        
-        if rgb not in mats:
-            mat = bpy.data.materials.new("Material %d" % i)
-            mat.use_nodes = True
-        
-            nodes = mat.node_tree.nodes
-            links = mat.node_tree.links           
-        
-            nodes.remove(nodes.get('Diffuse BSDF'))
-        
-            ao = nodes.new('ShaderNodeAmbientOcclusion')
+    ao = nodes.new('ShaderNodeAmbientOcclusion')        
+    links.new(att.outputs['Color'], ao.inputs['Color']
                     
-            glass = nodes.new('ShaderNodeBsdfGlass')
-            glass.inputs['Roughness'].default_value = 0.217
-            glass.inputs['IOR'].default_value = 2.1
-            glass.inputs['Color'].default_value = ( float(point['r']), 
-                                                    float(point['g']), 
-                                                    float(point['b']), 1.0 )
+    glass = nodes.new('ShaderNodeBsdfGlass')        
+    glass.inputs['Roughness'].default_value = 0.217
+    glass.inputs['IOR'].default_value = 2.1    
+    links.new(att.outputs['Color'], glass.inputs['Color'])
+    
         
-            mix = nodes.new('ShaderNodeMixShader')
-            mix.inputs['Fac'].default_value = .02
-            links.new(glass.outputs[0], mix.inputs[1])
-            links.new(ao.outputs[0], mix.inputs[2])
+    mix = nodes.new('ShaderNodeMixShader')
+    mix.inputs['Fac'].default_value = .02
+    
+    links.new(glass.outputs[0], mix.inputs[1])
+    links.new(ao.outputs[0], mix.inputs[2])
             
-            material_output = nodes.get('Material Output')
-            links.new(mix.outputs[0], material_output.inputs[0])
-            
-            mats[rgb] = mat
-        
-        mat = mats[rgb]
-        
-        obj.data.materials.append(mat)
+    material_output = nodes.get('Material Output')
+    links.new(mix.outputs[0], material_output.inputs[0])
+    
+    obj.data.materials.append(mat)
             
 reset_blend()
 setup_world(resolution_x=1024, resolution_y=1024)
