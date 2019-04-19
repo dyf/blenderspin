@@ -11,7 +11,7 @@ writer = vtk.vtkPLYWriter()
 for i,row in df.iterrows():
     print(i)
     s = vtk.vtkSphereSource()
-    s.SetRadius(0.1)
+    s.SetRadius(0.05)
     s.SetCenter(row['y'], row['x'], row['z'])
     s.SetThetaResolution(16)
     s.SetPhiResolution(8)

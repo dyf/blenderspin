@@ -79,7 +79,7 @@ def setup_animation(num_frames, directory):
 def add_light(tracker):
     bpy.ops.object.lamp_add(type='AREA')
     light = bpy.data.objects['Area']
-    light.location = (10,-5,10)
+    light.location = (-10,4,10)
 
     bpy.ops.object.select_all(action = "DESELECT")
     light.select = True
@@ -111,7 +111,7 @@ def spin_render(num_frames, out_dir, scale, z, dry_run=False):
         bpy.ops.render.render(animation=True)
 
 def load_data():
-    file_name = "/Users/davidf/Projects/blenderspin/hmtg/geo.ply"
+    file_name = "C:/Users/davidf/workspace/blenderspin/ephys/geo.ply"
     
     bpy.ops.import_mesh.ply(filepath=file_name)
     obj = bpy.context.object
@@ -130,7 +130,7 @@ def load_data():
     att.attribute_name = 'Col'
         
     ao = nodes.new('ShaderNodeAmbientOcclusion')        
-    links.new(att.outputs['Color'], ao.inputs['Color']
+    links.new(att.outputs['Color'], ao.inputs['Color'])
                     
     glass = nodes.new('ShaderNodeBsdfGlass')        
     glass.inputs['Roughness'].default_value = 0.217
@@ -154,4 +154,4 @@ setup_world(resolution_x=1024, resolution_y=1024)
 load_data()
         
     
-spin_render(300, "/Users/davidf/Projects/blenderspin/hmtg", 20, 0, dry_run=True)
+spin_render(300, "C:/Users/davidf/workspace/blenderspin/ephys/frame_", 10, 0, dry_run=True)
